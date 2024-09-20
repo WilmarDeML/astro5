@@ -1,0 +1,64 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { MOSTRAR_BOTON_COMPRAR } from 'astro:env/server'
+import AmazonLogo from '../../components/AmazonLogo.astro';
+import BookScore from '../../components/BookScore.astro';
+import BotonComprar from '../../components/BotonComprar.astro';
+
+export async function getStaticPaths() {
+  const books = await getCollection('books');
+  return books.map((book) => ({
+    params: { id: book.slug },
+    props: { book },
+  }));
+}
+
+const { title, author, img, readtime, description, buy } = Astro.props.book.data;
+const { slug } = Astro.props.book;
+
+const { Content } = await render(Astro.props.book);
+
+export const prerender = true;
+
+---
+
+<Layout title=`${title} - Dev Books`>
+  <div class="flex gap-12">
+    <aside class="flex flex-col items-center gap-4">
+      <a href="/" class="hover:scale-110 opacity-50 text-3xl">🔙</a>
+      <img
+        transition:name={"img-" + slug}
+        src=`/${img}` 
+        alt={title} 
+        class="w-72 rounded-lg h-auto"
+      />
+      <BookScore server:defer>
+        <span slot="fallback" class="text-xs opacity-70">Cargando puntuación...</span>
+      </BookScore>
+      { MOSTRAR_BOTON_COMPRAR && <BotonComprar buy={buy}></BotonComprar> }
+    </aside>
+    <main class="max-w-3xl">
+      <h1 class="mb-4 text-3xl font-bold leading-tight text-white" transition:name={"title-" + slug}>
+        {title}
+      </h1>
+      <div class="prose prose-invert">
+        <Content />
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<!-- script para obtener variable de entorno desde el cliente 
+<script>
+  import { ENDPOINT_SCORE_API } from "astro:env/client";
+
+  const scoreElement = document.querySelector("#score");
+
+  fetch(ENDPOINT_SCORE_API)
+    .then(resp => resp.text())
+    .then(scoreValue => {
+      if (scoreElement)
+        scoreElement.innerHTML = `⭐ Puntuación: ${scoreValue.trim()}/5`;
+    });
+</script> -->
